@@ -13,11 +13,23 @@ import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { LoadingPage, LoadingSpinner } from "~/components/loading";
+import { useState } from "react";
 
 dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
+
+  const [postInput, setPostInput] = useState("");
+
+  const ctx = api.useUtils();
+
+  const { mutate, isLoading: isPosting } = api.post.create.useMutation({
+    onSuccess: () => {
+      setPostInput("");
+      void ctx.post.getAll.invalidate();
+    },
+  });
 
   if (!user) return null;
 
@@ -34,7 +46,12 @@ const CreatePostWizard = () => {
         <input
           placeholder="Type Some emojis!"
           className="grow bg-transparent"
+          type="text"
+          value={postInput}
+          onChange={(e) => setPostInput(e.target.value)}
+          disabled={isPosting}
         />
+        <button onClick={() => mutate({ content: postInput })}>Post</button>
       </div>
     </div>
   );
@@ -73,7 +90,7 @@ const Feed = () => {
 
   return (
     <div>
-      {[...data, ...data]?.map((fullPost) => (
+      {data.map((fullPost) => (
         <PostView {...fullPost} key={fullPost.post.id} />
       ))}
     </div>
@@ -94,7 +111,10 @@ export default function Home() {
       </Head>
       <main className="flex h-screen justify-center">
         <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
-          <div className="border-b border-slate-400 p-4 ">
+          <div className="flex w-full flex-row justify-between border-b border-slate-400 p-4">
+            <div className="flex align-middle">
+              <h1 className="text-2xl font-bold">Chirp</h1>
+            </div>
             <div className="flex justify-end">
               <div>
                 {!isLoaded ? (
