@@ -35,7 +35,11 @@ const filterUserForClient = (user: User) => {
 
 export const postRouter = createTRPCRouter({
   create: privateProcedure
-    .input(z.object({ content: z.string().min(1) }))
+    .input(
+      z.object({
+        content: z.string().emoji("Only emojis allowed").min(1).max(280),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const authorId = ctx.userId;
 
