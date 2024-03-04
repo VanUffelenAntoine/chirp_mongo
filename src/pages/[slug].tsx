@@ -1,20 +1,27 @@
-import {
-  SignInButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
 import Head from "next/head";
 import Image from "next/image";
 
-import { type RouterOutputs, api } from "~/utils/api";
+import { api } from "~/utils/api";
+import { LoadingPage } from "~/components/loading";
+import { PageLayout } from "~/components/Layout";
+import { PostView } from "~/components/PostView";
 
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { LoadingPage, LoadingSpinner } from "~/components/loading";
-import { useState } from "react";
-import toast from "react-hot-toast";
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.post.getPostsByUserId.useQuery({
+    userId: props.userId,
+  });
+
+  if (isLoading) return <LoadingPage />;
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((post) => (
+        <PostView key={post.post.id} {...post} />
+      ))}
+    </div>
+  );
+};
 
 export default function ProfilePage({
   username,
@@ -44,8 +51,10 @@ export default function ProfilePage({
           />
         </div>
         <div className="h-[64px]"></div>
-        <div className="p-4 text-2xl font-bold">{`@${data.username}`}</div>
-        <div className="w-full border-b border-slate-400"></div>
+        <div className="border-b border-slate-400 p-4 text-2xl font-bold">{`@${data.username}`}</div>
+        <div className="w-full border-b border-slate-400">
+          <ProfileFeed userId={data.id} />
+        </div>
       </PageLayout>
     </>
   );
@@ -60,7 +69,6 @@ import type {
   GetStaticPropsContext,
   InferGetStaticPropsType,
 } from "next";
-import { PageLayout } from "~/components/Layout";
 
 export async function getStaticProps(
   context: GetStaticPropsContext<{ slug: string }>,
